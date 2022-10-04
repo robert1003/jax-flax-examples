@@ -1,23 +1,16 @@
 import argparse
+from typing import Any, Callable, Sequence
+
 import jax
 from jax import random
 from jax import numpy as jnp
-import numpy as np
-
-import time
-
-def predict(W, b, x):
-    return jnp.dot(x, W) + b
-
-@jax.jit
-def mse(W, b, x_batch, y_batch):
-    def l2_error(x, y):
-        y_pred = predict(W, b, x)
-        return jnp.inner(y - y_pred, y - y_pred) / 2.0
-
-    return jnp.mean(jax.vmap(l2_error)(x_batch, y_batch), axis=0)
+import optax
+from flax import linen as nn
 
 def gen_data(key, n_samples, x_dim, y_dim):
+    def predict(W, b, x):
+        return jnp.dot(x, W) + b
+
     key_param, key_sample = random.split(key)
 
     key_W, key_b = random.split(key_param)
@@ -30,13 +23,30 @@ def gen_data(key, n_samples, x_dim, y_dim):
 
     return W, b, x_samples, y_samples
 
-@jax.jit
-def update(W, b, x_batch, y_batch, lr):
-    loss, (grad_W, grad_b) = jax.value_and_grad(mse, (0, 1))(W, b, x_batch, y_batch)
-    W, b = W - grad_W * lr, b - grad_b * lr
+class SimpleDense(nn.Module):
+    dim: int
+    kernel_init: Callable = nn.initializers.lecun_normal()
+    bias_init: Callable = nn.initializers.zeros
 
-    return loss, W, b
-    
+    @nn.compact
+    def __call__(self, x):
+        kernel = self.param('kernel', self.kernel_init, (x.shape[-1], self.dim))
+        bias = self.param('bias', self.bias_init, (self.dim,))
+
+        return jnp.dot(x, kernel) + bias
+
+class MLP(nn.Module):
+    features: Sequence[int]
+
+    @nn.compact
+    def __call__(self, x):
+        for i, dim in enumerate(self.features):
+            x = SimpleDense(dim, name=f"dense{i}")(x)
+            if i != len(self.features) - 1:
+                x = nn.relu(x)
+        return x
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -52,25 +62,42 @@ def parse_args():
 def main():
     args = parse_args()
     key = random.PRNGKey(args.seed)
-    W, b, x_samples, y_samples = gen_data(key, args.num_samples, args.x_dim, args.y_dim)
+    key_data, key_model = random.split(key)
+    W, b, x_samples, y_samples = gen_data(key_data, args.num_samples, args.x_dim, args.y_dim)
 
-    W_hat, b_hat = jnp.zeros_like(W), jnp.zeros_like(b)
+    model = MLP(features=[args.y_dim])
+    x = random.uniform(key_data, (args.x_dim,)) # dummy data
+    output, params = model.init_with_output(key_model, x)
+    print('initialized parameters:')
+    print(jax.tree_util.tree_map(lambda x: x.shape, params))
+    print('output:', output)
+
+    # optimizer
+    optimizer = optax.sgd(learning_rate=args.learning_rate)
+    opt_state = optimizer.init(params)
+
+    # criterion (loss function) and grad function
+    @jax.jit
+    def mse(params, x_batch, y_batch):
+        def l2_error(x, y):
+            y_pred = model.apply(params, x)
+            return jnp.inner(y - y_pred, y - y_pred) / 2.0
+
+        return jnp.mean(jax.vmap(l2_error)(x_batch, y_batch), axis=0)
+    loss_grad_fn = jax.value_and_grad(mse)
+
+    # train loop
     for epoch in range(args.train_epochs):
-        loss, W_hat, b_hat = update(W_hat, b_hat, x_samples, y_samples, args.learning_rate)
+        loss_val, grads = loss_grad_fn(params, x_samples, y_samples)
+        updates, opt_state = optimizer.update(grads, opt_state)
+        params = optax.apply_updates(params, updates)
 
         if (epoch + 1) % 100 == 0:
-            print('Loss step {}: {:.5f}'.format(epoch + 1, loss))
+            print('Loss step {}: {:.5f}'.format(epoch + 1, loss_val))
 
-    print('Loss for true W, b: {:.5f}'.format(mse(W, b, x_samples, y_samples)))
-    print('L2 between W and W_hat', ((W - W_hat)**2).mean())
-    print('L2 beteen b and b_hat', ((b - b_hat)**2).mean())
-    print('Linf between W and W_hat', jnp.abs(W - W_hat).max())
-    print('Linf between b and b_hat', jnp.abs(b - b_hat).max())
-
+    from flax.core import freeze, unfreeze
+    true_params = freeze({'params': {'dense0': {'kernel': W, 'bias': b}}})
+    print('Loss for true W, b: {:.5f}'.format(mse(true_params, x_samples, y_samples)))  
 
 if __name__ == '__main__':
-    start_time = time.time()
     main()
-    end_time = time.time()
-
-    print('Execution finished in {} seconds'.format(end_time - start_time))
