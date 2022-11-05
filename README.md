@@ -1,4 +1,12 @@
-# Jax / Flax Tips
+## Contents
+
+* xor-classifier: a simple classifier in flax that illustrate the basic operations of flax, from dataset creation, model building, optimizer and loss construction, the training and evaluation loop, and checkpointing.
+* activation: implementation of common activation function.
+* initialization: implementation of common initialization function..
+* optimization: implementation of common optimizer.
+
+
+## Jax / Flax Tips
 
 * Preventing JAX from using all GPU mem
 ```python3
@@ -22,3 +30,7 @@ def NumpyDataLoader(dataset, **kwargs):
 ```
 
 * Flax save/load model: [ref](https://github.com/google/flax/discussions/1876)
+
+## Reference
+
+[UvA DL Notebooks](https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/JAX/tutorial4/Optimization_and_Initialization.html)
