@@ -3,7 +3,7 @@ In flax.linen.nn.Module, `kernel_init` is a function with type
 `Callable[[PRNGKey, Shape, Dtype], Array] which will be used to
 initialize each pytree leaf.
 
-Math of Xavier init and Kaming init is given at 
+Math of Xavier init and Kaiming init is given at
 https://pouannes.github.io/blog/initialization/#mjx-eqn-eqfwd_K
 '''
 import jax
@@ -34,7 +34,7 @@ def xavier_normal_init(key, shape, dtype):
     return std * jax.random.normal(key, shape, dtype=dtype)
 
 '''
-Kaming initialization - same goal as Xavier, however the
+Kaiming initialization - same goal as Xavier, however the
 derivation take the effect of activation function into account.
 
 Note that first layer should not use this, since input did not
