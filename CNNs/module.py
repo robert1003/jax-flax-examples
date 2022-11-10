@@ -2,7 +2,9 @@ import optax
 import jax
 import jax.numpy as jnp
 import numpy as np
-from  flax.training import train_state
+from functools import partial
+from flax.training import train_state
+from flax.core.frozen_dict import unfreeze
 
 class FlaxModule:
     def __init__(self, model, rng, sample_input):
@@ -11,13 +13,14 @@ class FlaxModule:
         self.sample_input = sample_input
         self.criterion = optax.softmax_cross_entropy_with_integer_labels
 
-    def _forward_pass(state, param, X):
-        logits = state.apply_fn(param, X)
+    def _forward_pass(self, state, param, X):
+        logits, mutated_vars = state.apply_fn(param, X,
+                mutable=['batch_stats'])
         y_hat = jnp.argmax(logits, axis=-1).astype(jnp.int32)
 
         return logits, y_hat
 
-    def _calc_loss_acc(state, param, batch):
+    def _calc_loss_acc(self, state, param, batch):
         X, y = batch
         logits, y_hat = self._forward_pass(state, param, X)
         loss = self.criterion(logits, y).mean()
@@ -25,13 +28,13 @@ class FlaxModule:
 
         return loss, acc
 
-    @jax.jit
+    @partial(jax.jit, static_argnums=(0,))
     def training_step(self, state, batch, batch_idx):
         grad_fn = jax.value_and_grad(self._calc_loss_acc, argnums=1, has_aux=True)
         (loss, acc), grads = grad_fn(state, state.params, batch)
-        return grads, loss.item(), acc.item()
+        return grads, (loss.item(), acc.item())
 
-    @jax.jit
+    @partial(jax.jit, static_argnums=(0,))
     def validation_step(self, state, batch, batch_idx):
         loss, acc = self._calc_loss_acc(state, batch)
         return loss.item(), acc.item()
@@ -44,7 +47,7 @@ class FlaxModule:
         return y_hat
 
     def configure_train_state(self):
-        optimizer = optax.adam(lr=1e-3)
+        optimizer = optax.adam(learning_rate=1e-3)
         self.rng, model_rng = jax.random.split(self.rng, 2)
         params = self.model.init(model_rng, self.sample_input)
         state = train_state.TrainState.create(apply_fn=self.model.apply,

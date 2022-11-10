@@ -23,7 +23,7 @@ class FlaxTrainer:
 
                 train_batch_loss.append(loss)
                 train_batch_acc.append(acc)
-                train_tqdm.set_postfix(f'loss={loss:.3f} acc={acc:.3f}')
+                train_tqdm.set_postfix_str(f'loss={loss:.3f} acc={acc:.3f}')
 
                 train_step += 1
 
@@ -40,4 +40,13 @@ class FlaxTrainer:
             print('Epoch', epoch, np.mean(test_batch_loss))
             print('Epoch', epoch, np.mean(test_batch_acc))
 
+        return train_state
+
+    def predict(self, module, train_state, test_loader):
+        prediction = []
+        test_tqdm = tqdm(test_dataloader, desc=f'Predict Epoch {epoch}', leave=False)
+        for idx, batch in enumerate(test_tqdm):
+            prediction.append(flaxModule.predict_step(train_state, batch, idx))
+
+        return np.concatenate(prediction)
 
