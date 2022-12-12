@@ -40,7 +40,7 @@ class ImageFlow(nn.Module):
         log_px = ldj + log_pz
         nll = -log_px
 
-        npd = nll * np.log2(np.exp(1)) / np.prod(imgs.shape[1:])
+        bpd = nll * np.log2(np.exp(1)) / np.prod(imgs.shape[1:])
         return (bpd.mean() if not return_ll else log_px), rng
 
     def sample(self, img_shape, rng, z_init=None):
@@ -119,7 +119,79 @@ class VariationalDequantization(Dequantization):
 
         return z, ldj, rng
 
+class CouplingLayer(nn.Module):
+    network: nn.Module # f(x) -> mu, sigma
+    mask: np.ndarray
+    c_in: int
+
+    def setup(self):
+        self.scaling_factor = self.param('scaling_factor',
+                nn.initializers.zeros, (self.c_in,))
+
+    def __call__(self, z, ldj, rng, reverse=False, orig_img=None):
+        z_in = z*self.mask # mask out 1:d
+        if orig_img is None:
+            nn_out = self.network(z_in)
+        else:
+            nn_out = self.network(jnp.concatenate([z_in, orig_img], axis=-1)) # condition on orig image
+        s, t = nn_out.split(2, axis=-1) # mu, log(sigma)
+
+        # scale sigma into [-scaling_fac, scaling_fac]
+        s_fac = jnp.exp(self.scaling_factor).reshape(1, 1, 1, -1)
+        s = nn.tanh(s / s_fac) * s_fac
+
+        # apply mask on s and t
+        s = s * (1 - self.mask)
+        t = t * (1 - self.mask)
+
+        if not reverse:
+            z = (z + t) * jnp.exp(s)
+            ldj += s.sum(axis=[1,2,3])
+        else:
+            z = (z * jnp.exp(-s)) - t
+            ldj -= s.sum(axis=[1,2,3])
+
+        return z, ldj, rng
+
+class ConcatELU(nn.Module):
+    @nn.compact
+    def __call__(self, x):
+        return jnp.concatenate([nn.elu(x), nn.elu(-x)], axis=-1)
+
+class GatedConv(nn.Module):
+    c_in: int
+    c_hidden: int
+
+    @nn.compact
+    def __call__(self, x):
+        out = nn.Sequential([
+            ConcatELU(),
+            nn.Conv(self.c_hidden, kernel_size=(3,3)),
+            ConcatELU(),
+            nn.Conv(2*self.c_in, kernel_size=(1,1))
+        ])(x)
+        val, gate = out.split(2, axis=-1)
+        return x + val*nn.sigmoid(gate)
+
+class GatedConvNet(nn.Module):
+    c_hidden: int
+    c_out: int
+    num_layers: int=3
+
+    def setup(self):
+        layers = []
+        layers += [nn.Conv(self.c_hidden, kernel_size=(3,3))]
+        for layer_index in range(self.num_layers):
+            layers += [GatedConv(self.c_hidden, self.c_hidden), nn.LayerNorm()]
+        layers += [ConcatELU(), nn.Conv(self.c_out, kernel_size=(3,3),
+            kernel_init=nn.initializers.zeros)]
+        self.nn = nn.Sequential(layers)
+
+    def __call__(self, x):
+        return self.nn(x)
+
 if __name__ == '__main__':
+    # test Dequantization
     orig_img = np.random.random_integers(low=0, high=255, size=(1, 24, 24, 1))
     ldj = jnp.zeros(1,)
     dequant_model = Dequantization()
@@ -143,7 +215,7 @@ if __name__ == '__main__':
     import seaborn as sns
     import matplotlib.pyplot as plt
     from matplotlib.colors import to_rgb
-    def visualize_dequantization(quants, prior=None):
+    def visualize_dequantization(quants, fig_name, prior=None):
         """
         Function for visualizing the dequantization values of discrete values in continuous space
         """
@@ -181,7 +253,34 @@ if __name__ == '__main__':
         plt.ylabel("Probability")
         plt.title(f"Dequantization distribution for {quants} discrete values")
         plt.legend()
-        plt.savefig("dequant", bbox_inches="tight")
+        plt.savefig(fig_name, bbox_inches="tight")
 
-    visualize_dequantization(quants=8)
-    visualize_dequantization(quants=8, prior=np.array([0.075, 0.2, 0.4, 0.2, 0.075, 0.025, 0.0125, 0.0125]))
+    visualize_dequantization(quants=8, fig_name="dequant_uniform.png")
+    visualize_dequantization(quants=8, fig_name="dequant_normal.png",
+            prior=np.array([0.075, 0.2, 0.4, 0.2, 0.075, 0.025, 0.0125, 0.0125]))
+
+    # test scaling
+    x = jnp.arange(-5,5,0.01)
+    scaling_factors = [0.5, 1, 2]
+    sns.set()
+    fig, ax = plt.subplots(1, 3, figsize=(12,3))
+    for i, scale in enumerate(scaling_factors):
+        y = nn.tanh(x / scale) * scale
+        ax[i].plot(x, y)
+        ax[i].set_title("Scaling factor: " + str(scale))
+        ax[i].set_ylim(-3, 3)
+    plt.subplots_adjust(wspace=0.4)
+    sns.reset_orig()
+    plt.savefig("scaling_factor.png", bbox_inches='tight')
+
+    # test Conv Net
+    main_rng = random.PRNGKey(10)
+    main_rng, x_rng = random.split(main_rng)
+    x = random.normal(x_rng, (3, 32, 32, 16))
+    gcn = GatedConvNet(c_hidden=32, c_out=18, num_layers=3)
+    main_rng, init_rng = random.split(main_rng)
+    params = gcn.init(init_rng, x)['params']
+    # Apply attention with parameters on the inputs
+    out = gcn.apply({'params': params}, x)
+    print('Out', out.shape)
+
