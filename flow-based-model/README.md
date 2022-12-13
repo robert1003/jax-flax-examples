@@ -1,5 +1,7 @@
 # Result
 
+Run on 12th Gen Intel(R) Core(TM) i7-12700F / NVIDIA GeForce RTX 3090
+
 | Model | Train Bpd | Val Bpd | Test Bpd | Inference Time (ms) | Num Params |
 | - | - | - | - | - | - |
 | simple | 1.079357 | 1.080054 | 1.078568 | 4.1067 | 556312 |
