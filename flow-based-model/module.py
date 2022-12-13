@@ -79,7 +79,7 @@ class FlowModule:
     @staticmethod
     def val_epoch(state, rng, dataloader, val_step):
         tot_loss, tot_size = [], []
-        for batch in dataloader:
+        for batch in tqdm(dataloader, desc='Val', leave=False):
             loss, rng = val_step(state, rng, batch)
             tot_loss.append(loss)
             tot_size.append(batch[0].shape[0])
@@ -93,14 +93,14 @@ class FlowModule:
     @staticmethod
     def pred_epoch(state, rng, dataloader, pred_step):
         tot_loss, tot_size = [], []
-        for batch in dataloader:
+        for batch in tqdm(dataloader, desc='Pred', leave=False):
             loss, rng = pred_step(state, rng, batch)
             tot_loss.append(loss)
             tot_size.append(batch[0].shape[0])
 
         tot_loss = np.stack(jax.device_get(tot_loss))
         tot_size = np.stack(tot_size)
-        avg_loss = (tot_loss * tot_size).sim() / tot_size.sim()
+        avg_loss = (tot_loss * tot_size).sum() / tot_size.sum()
 
         return avg_loss
 

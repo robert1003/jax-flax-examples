@@ -43,6 +43,10 @@ def main():
         model = create_simple_flow(False)
     elif args.model_type == 'vardeq':
         model = create_simple_flow(True)
+    elif args.model_type == 'multi-simple':
+        model = create_multiscale_flow(False)
+    elif args.model_type == 'multi-vardeq':
+        model = create_multiscale_flow(True)
     else:
         raise NotImplementedError
 
