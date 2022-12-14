@@ -105,14 +105,18 @@ class VariationalDequantization(Dequantization):
         z = z.astype(jnp.float32)
         img = (z / 255.0) * 2 - 1
 
-        # uniform prior
+        # u starts as a uniform distribution...
         rng, uniform_rng = random.split(rng)
         deq_noise = random.uniform(uniform_rng, z.shape)
+        # the inverse sigmoid here is to map [0,1] -> (-inf,inf)
+        # since most flow transformation is defined on (-inf,inf)
         deq_noise, ldj = self.sigmoid(deq_noise, ldj, reverse=True)
         if self.var_flows is not None:
             for flow in self.var_flows:
                 deq_noise, ldj, rng = flow(deq_noise, ldj, rng, reverse=False, orig_img=img)
+        # cancel out the previous inverse sigmoid
         deq_noise, ldj = self.sigmoid(deq_noise, ldj, reverse=False)
+        # ...and be transformed into a noise (condition on img)
 
         z = (z + deq_noise) / 256.0
         ldj -= np.log(256.0) * np.prod(z.shape[1:])
