@@ -9,9 +9,9 @@ Recaull that the goal for our MNIST flow model here transform a discrete distrib
 [TODO figure 1]
 
 An intuitive way to fix this is to add a uniform noise to the discrete distribution, which is the "dequantize" process. The reverse process ("quantize" process, continuous -> discrete) can be a simple $floor$ function. Suppose the discrete distribution we want to model is $p(x)$, then
-$$
+```math
 p(x) = \int p(x+u)du = \int \frac{q(u|x)}{q(u|x)} du = \mathbb{E}\_{u\sim q(u|x)} \left[ \frac{p(x+u)}{q(u|x)} \right]
-$$
+```
 where $q(u|x)$ is any continuous distribution. If we add a uniform noise to fix this, then $q(u|x)=Unif(0, 1)$ and the "true" $p(x)$ we want to modify will become Figure 2. Notice that this distribution, though better than Figure 1, is still hard to model it with continuous distribution because of the discontinuity between values.
 
 [TODO figure 2]
