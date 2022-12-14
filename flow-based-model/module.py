@@ -65,6 +65,18 @@ class FlowModule:
                 apply_fn=model.apply, params=params, tx=opt)
 
     @staticmethod
+    def sample(state, sample_fn, rng, img_shape, z_init=None):
+        imgs = state.apply_fn({'params': state.params}, img_shape, rng, z_init, method=sample_fn)
+
+        return imgs
+
+    @staticmethod
+    def encode(state, encode_fn, rng, imgs):
+        z, ldj, rng = state.apply_fn({'params': state.params}, imgs, rng, method=encode_fn)
+
+        return z, ldj, rng
+
+    @staticmethod
     def train_epoch(state, rng, dataloader, train_step, epoch):
         avg_loss = 0.
         tqdm_bar = tqdm(dataloader, leave=False, desc=f'Epoch {epoch}')

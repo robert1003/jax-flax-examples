@@ -1,6 +1,10 @@
+import torch
+import torchvision
 import jax
 import jax.numpy as jnp
 import numpy as np
+import math
+import matplotlib.pyplot as plt
 
 from model import CouplingLayer, GatedConvNet, VariationalDequantization, \
         Dequantization, ImageFlow, SqueezeFlow, SplitFlow
@@ -9,6 +13,25 @@ def img2np(img):
     img = np.array(img, dtype=np.int32)
     img = np.expand_dims(img, axis=-1)
     return img
+
+def show_imgs(imgs, file_name, title=None, row_size=4):
+    # Form a grid of pictures (we use max. 8 columns)
+    imgs = np.copy(jax.device_get(imgs))
+    num_imgs = imgs.shape[0]
+    is_int = (imgs.dtype==np.int32)
+    nrow = min(num_imgs, row_size)
+    ncol = int(math.ceil(num_imgs/nrow))
+    imgs_torch = torch.from_numpy(imgs).permute(0, 3, 1, 2)
+    imgs = torchvision.utils.make_grid(imgs_torch, nrow=nrow, pad_value=128 if is_int else 0.5)
+    np_imgs = imgs.cpu().numpy()
+    # Plot the grid
+    plt.figure(figsize=(1.5*nrow, 1.5*ncol))
+    plt.imshow(np.transpose(np_imgs, (1,2,0)), interpolation='nearest')
+    plt.axis('off')
+    if title is not None:
+        plt.title(title)
+    plt.savefig(file_name, bbox_inches='tight')
+    plt.clf()
 
 def create_checkerboard_mask(h, w, invert=False):
     x, y = jnp.arange(h, dtype=jnp.int32), jnp.arange(w, dtype=jnp.int32)
