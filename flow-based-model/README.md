@@ -4,7 +4,7 @@
 
 ### Dequantization
 
-Recaull that the goal for our MNIST flow model here transform a discrete distribution (pixel value distribution) to a multivariate gaussian normal distribution. In other words, we want to model discrete distribution (e.g. categorical distribution) with our flow model here. The problem is that a discrete distribution is not well-defined in a continuous space: the pdf of it will become a function that is mostly zero but full of delta spikes with no width (Figure 1). This will cause the flow model to place infinite likelihood on those points, and the resulting model cannot be used since it tells nothing about the "true" discrete pixel value distribution.
+Recall that the goal for our MNIST flow model here transform a discrete distribution (pixel value distribution) to a multivariate gaussian normal distribution. In other words, we want to model discrete distribution (e.g. categorical distribution) with our flow model here. The problem is that a discrete distribution is not well-defined in a continuous space: the pdf of it will become a function that is mostly zero but full of delta spikes with no width (Figure 1). This will cause the flow model to place infinite likelihood on those points, and the resulting model cannot be used since it tells nothing about the "true" discrete pixel value distribution.
 
 [TODO figure 1]
 
