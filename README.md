@@ -4,6 +4,7 @@
 * activation: implementation of common activation function.
 * initialization: implementation of common initialization function..
 * optimization: implementation of common optimizer.
+* flow-based-model: implementation of flow model (on MNIST generation)
 
 
 ## Jax / Flax Tips
