@@ -51,19 +51,19 @@ We can see that although *-vardeq models have better bpd, the samples generated 
 
 * Simple
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/example-img/simple_img.png" alt="simple_img" style="zoom:50%;" />
+<img src="figures/example-img/simple_img.png" alt="simple_img" style="zoom:50%;" />
 
 * Vardeq
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/example-img/vardeq_img.png" alt="simple_img" style="zoom:50%;" />
+<img src="figures/example-img/vardeq_img.png" alt="simple_img" style="zoom:50%;" />
 
 * Multi-Simple
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/example-img/multi-simple_img.png" alt="simple_img" style="zoom:50%;" />
+<img src="figures/example-img/multi-simple_img.png" alt="simple_img" style="zoom:50%;" />
 
 * Multi-Vardeq
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/example-img/multi-vardeq_img.png" alt="simple_img" style="zoom:50%;" />
+<img src="figures/example-img/multi-vardeq_img.png" alt="simple_img" style="zoom:50%;" />
 
 ### Interpolation
 
@@ -71,27 +71,27 @@ The transition is more smooth in multi-* models compared to simple/vardeq.
 
 * Simple
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/interpolation/simple_interpolate_2.png" alt="simple_interpolate_2" style="zoom:50%;" />
+<img src="figures/interpolation/simple_interpolate_2.png" alt="simple_interpolate_2" style="zoom:50%;" />
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/interpolation/simple_interpolate_1.png" alt="simple_interpolate_1" style="zoom:50%;" />
+<img src="figures/interpolation/simple_interpolate_1.png" alt="simple_interpolate_1" style="zoom:50%;" />
 
 * Vardeq
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/interpolation/vardeq_interpolate_2.png" alt="vardeq_interpolate_2" style="zoom:50%;" />
+<img src="figures/interpolation/vardeq_interpolate_2.png" alt="vardeq_interpolate_2" style="zoom:50%;" />
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/interpolation/vardeq_interpolate_1.png" alt="vardeq_interpolate_1" style="zoom:50%;" />
+<img src="figures/interpolation/vardeq_interpolate_1.png" alt="vardeq_interpolate_1" style="zoom:50%;" />
 
 * Multi-Simple
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/interpolation/multi-simple_interpolate_2.png" alt="multi-simple_interpolate_2" style="zoom:50%;" />
+<img src="figures/interpolation/multi-simple_interpolate_2.png" alt="multi-simple_interpolate_2" style="zoom:50%;" />
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/interpolation/multi-simple_interpolate_1.png" alt="multi-simple_interpolate_1" style="zoom:50%;" />
+<img src="figures/interpolation/multi-simple_interpolate_1.png" alt="multi-simple_interpolate_1" style="zoom:50%;" />
 
 * Multi-Vardeq
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/interpolation/multi-vardeq_interpolate_2.png" alt="multi-vardeq_interpolate_2" style="zoom:50%;" />
+<img src="figures/interpolation/multi-vardeq_interpolate_2.png" alt="multi-vardeq_interpolate_2" style="zoom:50%;" />
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/interpolation/multi-vardeq_interpolate_1.png" alt="multi-vardeq_interpolate_1" style="zoom:50%;" />
+<img src="figures/interpolation/multi-vardeq_interpolate_1.png" alt="multi-vardeq_interpolate_1" style="zoom:50%;" />
 
 ### Dequant distribution
 
@@ -99,16 +99,16 @@ Recall that the pixel value distribution is high skewed toward 0 (0 is black). T
 
 * Simple
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/dequant-dist/simple_dequant.png" alt="simple_dequant" style="zoom:50%;" />
+<img src="figures/dequant-dist/simple_dequant.png" alt="simple_dequant" style="zoom:50%;" />
 
 * Vardeq
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/dequant-dist/vardeq_dequant.png" alt="vardeq_dequant" style="zoom:50%;" />
+<img src="figures/dequant-dist/vardeq_dequant.png" alt="vardeq_dequant" style="zoom:50%;" />
 
 * Multi-Simple
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/dequant-dist/multi-simple_dequant.png" alt="multi-simple_dequant" style="zoom:50%;" />
+<img src="figures/dequant-dist/multi-simple_dequant.png" alt="multi-simple_dequant" style="zoom:50%;" />
 
 * Multi-Vardeq
 
-<img src="/Users/robert1003/Desktop/git/jax-flax-examples/flow-based-model/figures/dequant-dist/multi-vardeq_dequant.png" alt="multi-vardeq_dequant" style="zoom:50%;" />
+<img src="figures/dequant-dist/multi-vardeq_dequant.png" alt="multi-vardeq_dequant" style="zoom:50%;" />
