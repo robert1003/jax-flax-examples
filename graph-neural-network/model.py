@@ -1,3 +1,5 @@
+from typing import List
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -92,6 +94,30 @@ class GATLayer(nn.Module):
 
         return x
 
+class GCN(nn.Module):
+    layer_dim: List[int]
+
+    @nn.compact
+    def __call__(self, x, G):
+        for dim in self.layer_dim:
+            x = GCNLayer(c_out=dim)(x, G)
+
+        return x
+
+class GAT(nn.Module):
+    layer_dim: List[int]
+    num_heads: int=8
+    concat: bool=False
+    alpha: float=0.2
+
+    @nn.compact
+    def __call__(self, x, G):
+        for dim in self.layer_dim:
+            x = GATLayer(c_out=dim, num_heads=self.num_heads,
+                    concat=self.concat, alpha=self.alpha)(x, G)
+
+        return x
+
 if __name__ == '__main__':
     # test GCNLayer
     x = jnp.arange(8, dtype=jnp.float32).reshape((1, 4, 2))
@@ -103,6 +129,7 @@ if __name__ == '__main__':
         'kernel': jnp.array([[1.,0.],[0.,1.]]), # Identity func
         'bias': jnp.array([0.,0.]),
     }}
+    print('\nGCN Layer')
     print('(In) Node features:\n', x)
     print('(Out) Node features:\n', gcn_layer.apply({'params':params}, x, G))
     print('Adjaency matrix:\n', G)
@@ -122,10 +149,32 @@ if __name__ == '__main__':
         'attn_snd': jnp.array([[-0.2, 0.3],[0.5,-0.1]])
     }
     out = gat_layer.apply({'params': params}, x, G)
-
+    print('\nGATLayer')
     print('(In) Node features:\n', x)
     print('(Out) Node features:\n', gat_layer.apply({'params':params}, x, G))
     print('Adjaency matrix:\n', G)
 
-    
+    # test GCN
+    x = jnp.arange(8, dtype=jnp.float32).reshape((1, 4, 2))
+    G = jnp.array([[[1,1,0,0],[1,1,1,1],[0,1,1,1],[0,1,1,1]]]).astype(
+            jnp.float32)
+
+    gcn = GCN(layer_dim=[5,10,10])
+    rng = jax.random.PRNGKey(0)
+    params = gcn.init(rng, x, G)['params']
+    print('\nGCN')
+    print('(In) Node features:\n', x)
+    print('(Out) Node features:\n', gcn.apply({'params':params}, x, G))
+
+    # test GAT
+    x = jnp.arange(8, dtype=jnp.float32).reshape((1, 4, 2))
+    G = jnp.array([[[1,1,0,0],[1,1,1,1],[0,1,1,1],[0,1,1,1]]]).astype(
+            jnp.float32)
+
+    gat = GAT(layer_dim=[5,10,10])
+    rng = jax.random.PRNGKey(0)
+    params = gat.init(rng, x, G)['params']
+    print('\nGAT')
+    print('(In) Node features:\n', x)
+    print('(Out) Node features:\n', gat.apply({'params':params}, x, G))
 
