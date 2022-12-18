@@ -33,7 +33,7 @@ def main():
 
     # load data & dataloader
     (train_set, val_set, test_set), (train_loader, val_loader, test_loader) = \
-            gutils.load_data(args.dataset, img2np, [50000, 10000], args.batch_size)
+            gutils.load_img_data(args.dataset, img2np, [50000, 10000], args.batch_size)
 
     # setup logger
     logger = SummaryWriter(log_dir=args.log_dir)
